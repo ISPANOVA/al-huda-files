@@ -1,0 +1,39 @@
+name: Tasmee model
+# Puts the Tasmee model on the release «tasmee-model-v3.1» of this public
+# repository, where the Al-Huda app downloads it once. Copied (and checked)
+# from the release of the same name in ISPANOVA/al-huda.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  model:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download and check
+        run: |
+          mkdir out && cd out
+          SRC=https://github.com/ISPANOVA/al-huda/releases/download/tasmee-model-v3.1
+          curl -sSfL --retry 3 -o model.int8.onnx "$SRC/model.int8.onnx"
+          curl -sSfL --retry 3 -o tokens.txt "$SRC/tokens.txt"
+          cat > SHA256SUMS.txt <<'SUMS'
+          31755836528da336a6192121cd7bc82cb41752dddb65566fd000b89c8686da6b  model.int8.onnx
+          252c10687e442aa9291973065fae19fa39bcd681c4f5612ec496a647e20b43a1  tokens.txt
+          SUMS
+          sed -i 's/^ *//' SHA256SUMS.txt
+          sha256sum -c SHA256SUMS.txt
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: tasmee-model-v3.1
+          name: ملفات التسميع (النموذج) • لا تُحذف
+          make_latest: true
+          body: |
+            نموذج التعرّف على التلاوة الذي يحمّله تطبيق الهدى مرة واحدة عند أول تسميع. لا تحذف هذا الإصدار.
+            Quran-Lab/zipformer_p-arabic-v3.1 (NPL-1.2, non-profit; free apps only). Automatic feedback can be wrong and does not replace a qualified teacher.
+          files: |
+            out/model.int8.onnx
+            out/tokens.txt
+            out/SHA256SUMS.txt
